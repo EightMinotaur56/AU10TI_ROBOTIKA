@@ -1,0 +1,5 @@
+1x arduino uno
+1x keypad/keyboard
+1x LCD Display
+1x pot meter
+1x 220 ohm resistor
