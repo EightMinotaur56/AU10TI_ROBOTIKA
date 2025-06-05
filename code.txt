@@ -1,0 +1,148 @@
+// C++ code
+//
+
+
+#include <LiquidCrystal.h>
+#include <Keypad.h>
+
+LiquidCrystal lcd(0, 1, 2, 3, 4, 5);
+const byte ROWS = 4;
+const byte COLS = 4;
+char keys[ROWS][COLS] = {
+  {'+','-','*','/'},
+  {'=','3','6','9'},
+  {'0','2','5','8'},
+  {'C','1','4','7'}
+};
+
+/*
+00:+
+01:-
+*
+/
+*/
+char operators[] = { '/','*','-','+' };
+byte rowPins[ROWS] = { 13,12,11,10 };
+byte colPins[COLS] = { 9,8,7,6 };
+Keypad customKeypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+String leftSide = "";
+char operation = ' ';
+String rightSide = "";
+bool isCalculated = false;
+double leftValue = 0;
+double rightValue = 0;
+double outVal = 0;
+void setup()
+{
+    lcd.begin(16, 2);
+
+    lcd.print("Calculator:");
+    lcd.setCursor(0, 1);
+}
+
+
+void loop()
+{
+    char key = customKeypad.getKey();
+    if (key && key != 'C' && !isCalculated) {
+        if (leftSide == "" && keyIsOperator(key)) {
+            leftSide = "0";
+            operation = key;
+        }
+        else {
+            if (operation == ' ' && !keyIsOperator(key)) {
+                if (leftSide == "" && key != '0') {
+                    leftSide += String(key);
+                }
+                else if (leftSide != "" && leftSide.length() < 7) {
+                    leftSide += String(key);
+                }
+            }
+            else if (operation == ' ' && keyIsOperator(key)) {
+                operation = key;
+            }
+            else if (rightSide == "" && key == '=') {
+                rightSide = "0";
+                isCalculated = true;
+            }
+            else if (key != '=' && !keyIsOperator(key)) {
+                if (rightSide == "" && key != '0') {
+                    rightSide += String(key);
+                }
+                else if (rightSide != "" && rightSide.length() < 7) {
+                    rightSide += String(key);
+                }
+            }
+            if (key == '=') {
+                isCalculated = true;
+                leftValue = leftSide.toDouble();
+                rightValue = rightSide.toDouble();
+                switch (operation)
+                {
+                case '+':
+                    outVal = leftValue + rightValue;
+                    break;
+                case '-':
+                    outVal = leftValue - rightValue;
+                    break;
+                case '*':
+                    outVal = leftValue * rightValue;
+                    break;
+                case '/':
+                    if (rightValue != 0) {
+                        outVal = leftValue / rightValue;
+                    }
+                    else {
+                        outVal = 0; // Handle division by zero
+                    }
+                    break;
+                }
+            }
+        }
+        if (!isCalculated) {
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Calculator:");
+            lcd.setCursor(0, 1);
+            lcd.print(leftSide + operation + rightSide);
+        }
+        else {
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            String outValString = String(outVal, 5);
+            int length = String(leftSide + operation + rightSide + "=" + outValString).length();
+            if (length > 16) {
+                lcd.setCursor(0, 0);
+                lcd.print(leftSide + operation + rightSide + "=");
+                lcd.setCursor(0, 1);
+                int outValLength = outValString.length();
+                if (outValLength > 16) {
+                    lcd.print(outValString.substring(0, 13) + "...");
+                }
+                else {
+                    lcd.print(outVal);
+                }
+            }
+            else {
+                lcd.setCursor(0, 0);
+                lcd.print("Calculator:");
+                lcd.setCursor(0, 1);
+                lcd.print(leftSide + operation + rightSide + "=" + outVal);
+            }
+        }
+    }
+    else if (key && key == 'C') {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Calculator:");
+        leftSide = "";
+        operation = ' ';
+        rightSide = "";
+        outVal = 0;
+        isCalculated = false;
+    }
+}
+
+bool keyIsOperator(char key){
+    return key=='*'||key=='/'||key=='+'||key=='-';
+}
